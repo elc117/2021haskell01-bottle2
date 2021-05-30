@@ -16,11 +16,29 @@ svgCircle x y r style =
 -- A opacidade pode não ser suportada em alguns visualizadores de SVG.
 svgAll :: String
 svgAll = 
-  svgBegin 500 500 ++ 
-  (svgCircle 60 60 50 "rgb(10, 145, 32, 0.4)") ++ 
-  (svgCircle 90 90 50 "rgb(105, 14, 30, 0.4)") ++ 
+  svgBegin 500 500 ++
+  (foldl (\acc x -> acc ++ x) "" circles) ++
   svgEnd
 
 main :: IO ()
 main = do
   writeFile "circles.svg" svgAll
+
+--
+
+color :: Int -> Int -> Int -> Float -> String
+color r g b a = printf "rgb(%d, %d, %d, %.2f)" r g b a
+
+right_triangles :: [(Int, Int, Int)]
+right_triangles = [(h, ca, cb) | h <- [1..], ca <- [1..h], cb <- [1..ca], h^2 == ca^2 + cb^2]
+
+first  (a,_,_) = a
+second (_,a,_) = a
+third  (_,_,a) = a
+
+first_500_right_triangles = takeWhile (\triangle -> first triangle < 500) right_triangles
+
+corresponding_colors = map (\triangle -> color (first triangle `mod` 256) (second triangle `mod` 256) (third triangle `mod` 256) 0.5) first_500_right_triangles
+
+circles :: [String]
+circles = map (\((h, ca, cb), color) -> svgCircle h ca cb color) (zip first_500_right_triangles corresponding_colors)
